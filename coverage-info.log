@@ -1,0 +1,21 @@
+Coverage of `com/google/common/collect/TreeRangeMap` class:
+    202 of 340 instructions covered = 59.41%
+    15 of 36 branches covered = 41.67%
+    57 of 86 lines covered = 66.28%
+    23 of 39 complexity covered = 58.97%
+    29 tests; 1 failure
+
+Coverage of `io/seata/core/protocol/RegisterRMRequest` class:
+    0 of 228 instructions covered = 0.00%
+    0 of 26 branches covered = 0.00%
+    0 of 62 lines covered = 0.00%
+    0 of 21 complexity covered = 0.00%
+    1 tests; 0 failure
+
+Coverage of `com/alibaba/fastjson/parser/deserializer/ResolveFieldDeserializer` class:
+    0 of 137 instructions covered = 0.00%
+    0 of 12 branches covered = 0.00%
+    0 of 43 lines covered = 0.00%
+    0 of 11 complexity covered = 0.00%
+    0 tests; 0 failure
+
