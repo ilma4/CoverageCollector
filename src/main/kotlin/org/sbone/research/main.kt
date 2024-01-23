@@ -5,6 +5,7 @@ import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.container.asContainer
 import org.vorpal.research.kfg.util.Flags
 import org.vorpal.research.kthelper.collection.mapToArray
+import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.tryOrNull
 import java.io.File
@@ -21,7 +22,8 @@ fun main(args: Array<String>) {
     val runsNumber = args[4].toInt()
     val logsPath = args[5]
     // arg[6] is timeout in seconds (eg: 120 is 2 minutes)
-    val timeoutMillis = tryOrNull { args[6] }?.toLong()?.times(1000) ?: Context.defaultTimeoutMillis
+    val timeoutMillis = tryOrNull { args[6] }?.toLong()?.times(1000L) ?: Context.defaultTimeoutMillis
+    log.debug { "Execution timeout is $timeoutMillis" }
 
     val bench = BenchmarkCollection(File(config))
 
@@ -33,7 +35,7 @@ fun main(args: Array<String>) {
                 evosuitePath = Path(evosuitePath),
                 junitPath = Path(junitPath),
                 logsPath = Path(logsPath),
-                executionTimeoutMilliseconds = timeoutMillis
+                executionTimeoutMillis = timeoutMillis
             )
 
             val containerPaths = (listOf(task.binDirectory) + task.classPath).map { it.toPath().toAbsolutePath() }

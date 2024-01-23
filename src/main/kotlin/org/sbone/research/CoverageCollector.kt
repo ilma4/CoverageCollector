@@ -2,8 +2,6 @@
 
 package org.sbone.research
 
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.analysis.ICounter
@@ -29,8 +27,42 @@ import java.lang.reflect.Array
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 import kotlin.io.path.*
 import kotlin.streams.toList
+
+fun <T> runWithTimeout(timeoutMillis: Long, function: () -> T): T? {
+    // Create a CountDownLatch to wait for the completion of the thread
+    val latch = CountDownLatch(1)
+    var result: T? = null
+    var functionFailed = false
+
+    // Create a thread to run the function
+    val thread = thread(start = true) {
+        try {
+            result = function()
+        } catch (e: Exception) {
+            functionFailed = true
+        } finally {
+            // Count down the latch to signal the function has finished
+            latch.countDown()
+        }
+    }
+
+    // Wait for the function to finish or the timeout to be reached
+    val completed = latch.await(timeoutMillis, TimeUnit.MILLISECONDS)
+
+    // Handle the thread interruption if needed
+    if (!completed || functionFailed) {
+        thread.interrupt()
+        return null
+    }
+
+    // Return the result if the function finished before the timeout, or null otherwise
+    return result
+}
 
 
 val String.javaString get() = replace(Package.SEPARATOR, Package.CANONICAL_SEPARATOR)
@@ -230,11 +262,14 @@ class CoverageReporter(
             val jcClass = classLoader.loadClass("org.junit.runner.JUnitCore")
             val jc = jcClass.newInstance()
             val computerClass = classLoader.loadClass("org.junit.runner.Computer")
-            val result = runBlocking {
-                withTimeoutOrNull(context.executionTimeoutMilliseconds) {
-                    jcClass.getMethod(
-                        "run", computerClass, Array.newInstance(Class::class.java, 0).javaClass
-                    ).invoke(jc, computerClass.newInstance(), arrayOf(testClass))
+            val method = jcClass
+                .getMethod("run", computerClass, Array.newInstance(Class::class.java, 0).javaClass)
+
+            val result = if (context.executionTimeoutMillis == Context.noTimeout) {
+                method.invoke(jc, computerClass.newInstance(), arrayOf(testClass))
+            } else {
+                runWithTimeout(context.executionTimeoutMillis) {
+                    method.invoke(jc, computerClass.newInstance(), arrayOf(testClass))
                 }
             }
             if (result == null) {

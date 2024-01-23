@@ -8,10 +8,11 @@ data class Context(
     val evosuitePath: Path,
     val junitPath: Path,
     val logsPath: Path,
-    val executionTimeoutMilliseconds: Long = defaultTimeoutMillis
+    val executionTimeoutMillis: Long = defaultTimeoutMillis
 ) {
     companion object {
-        public const val defaultTimeoutMillis: Long = Long.MAX_VALUE
+        public const val noTimeout: Long = -1
+        public const val defaultTimeoutMillis: Long = noTimeout
     }
 
     private val tempDir = basePath / "temp"
