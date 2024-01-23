@@ -20,6 +20,8 @@ fun main(args: Array<String>) {
     val junitPath = args[3]
     val runsNumber = args[4].toInt()
     val logsPath = args[5]
+    // arg[6] is timeout in seconds (eg: 120 is 2 minutes)
+    val timeoutMillis = tryOrNull { args[6] }?.toLong()?.times(1000) ?: Context.defaultTimeoutMillis
 
     val bench = BenchmarkCollection(File(config))
 
@@ -30,7 +32,8 @@ fun main(args: Array<String>) {
                 basePath = Path(baseDir) / "${name}_${run}",
                 evosuitePath = Path(evosuitePath),
                 junitPath = Path(junitPath),
-                logsPath = Path(logsPath)
+                logsPath = Path(logsPath),
+                executionTimeoutMilliseconds = timeoutMillis
             )
 
             val containerPaths = (listOf(task.binDirectory) + task.classPath).map { it.toPath().toAbsolutePath() }

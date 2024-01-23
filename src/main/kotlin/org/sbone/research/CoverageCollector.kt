@@ -2,6 +2,8 @@
 
 package org.sbone.research
 
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jacoco.core.analysis.Analyzer
 import org.jacoco.core.analysis.CoverageBuilder
 import org.jacoco.core.analysis.ICounter
@@ -19,6 +21,7 @@ import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.collection.mapToArray
 import org.vorpal.research.kthelper.logging.log
+import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.`try`
 import org.vorpal.research.kthelper.tryOrNull
 import java.io.File
@@ -227,8 +230,17 @@ class CoverageReporter(
             val jcClass = classLoader.loadClass("org.junit.runner.JUnitCore")
             val jc = jcClass.newInstance()
             val computerClass = classLoader.loadClass("org.junit.runner.Computer")
-            val result = jcClass.getMethod("run", computerClass, Array.newInstance(Class::class.java, 0).javaClass)
-                .invoke(jc, computerClass.newInstance(), arrayOf(testClass))
+            val result = runBlocking {
+                withTimeoutOrNull(context.executionTimeoutMilliseconds) {
+                    jcClass.getMethod(
+                        "run", computerClass, Array.newInstance(Class::class.java, 0).javaClass
+                    ).invoke(jc, computerClass.newInstance(), arrayOf(testClass))
+                }
+            }
+            if (result == null) {
+                log.warn { "Execution failed with timeout. Test: $testClassName" }
+                continue
+            }
 
             val resultClass = result.javaClass
             tests += resultClass.getMethod("getRunCount").invoke(result) as Int
