@@ -22,7 +22,7 @@ fun main(args: Array<String>) {
     val runsNumber = args[4].toInt()
     val logsPath = args[5]
     // arg[6] is timeout in seconds (eg: 120 is 2 minutes)
-    val timeoutMillis = tryOrNull { args[6] }?.toLong()?.times(1000L) ?: Context.defaultTimeoutMillis
+    val timeoutMillis = tryOrNull { args[6] }?.toLong()?.times(1000L) ?: Context.NO_TIMEOUT
     log.debug { "Execution timeout is $timeoutMillis" }
 
     val bench = BenchmarkCollection(File(config))

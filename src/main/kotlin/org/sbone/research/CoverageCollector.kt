@@ -231,7 +231,7 @@ class CoverageReporter(
             val method = jcClass
                 .getMethod("run", computerClass, Array.newInstance(Class::class.java, 0).javaClass)
 
-            val result = if (context.executionTimeoutMillis == Context.noTimeout) {
+            val result = if (context.executionTimeoutMillis == Context.NO_TIMEOUT) {
                 method.invoke(jc, computerClass.newInstance(), arrayOf(testClass))
             } else {
                 runWithTimeoutOrNull(context.executionTimeoutMillis) {
