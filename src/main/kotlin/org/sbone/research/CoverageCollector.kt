@@ -18,6 +18,7 @@ import org.vorpal.research.kfg.Package
 import org.vorpal.research.kfg.container.Container
 import org.vorpal.research.kthelper.assert.unreachable
 import org.vorpal.research.kthelper.collection.mapToArray
+import org.vorpal.research.kthelper.logging.debug
 import org.vorpal.research.kthelper.logging.log
 import org.vorpal.research.kthelper.logging.warn
 import org.vorpal.research.kthelper.`try`
@@ -237,10 +238,22 @@ class CoverageReporter(
                 runWithTimeoutOrNull(context.executionTimeoutMillis) {
                     method.invoke(jc, computerClass.newInstance(), arrayOf(testClass))
                 }
-            }
-            if (result == null) {
-                log.warn { "Execution failed with timeout. Test: $testClassName" }
-                continue
+            }.let {
+                if (it is OK) it.value else it
+            } ?: Fail(NullPointerException("Execution returned null"))
+            when (result) {
+                is Timeout -> {
+                    log.warn {
+                        """Execution failed with timeout. Test: $testClassName
+                               Note that timeouts for testcases are inaccurate, so running test again may succeed
+                            """
+                    }
+                    continue
+                }
+                is Fail -> {
+                    log.debug { "Test $testClassName execution failed with exception ${result.e}" }
+                    continue
+                }
             }
 
             val resultClass = result.javaClass

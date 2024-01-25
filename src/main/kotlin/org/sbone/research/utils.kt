@@ -7,13 +7,19 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 
+
+sealed interface Result
+data object Timeout : Result
+class Fail(val e: Exception?) : Result
+class OK(val value: Any?): Result
+
 /*
   Like runBlocking{ withTimeout(timeout){ yourCode() }}
   But works as expected if yourCode is not suspendable
 */
-fun <T> runWithTimeoutOrNull(timeoutMillis: Long, function: () -> T): T? {
+fun <T> runWithTimeoutOrNull(timeoutMillis: Long, function: () -> T): Result {
     if (timeoutMillis <= 0) {
-        return null
+        return Fail(null)
     }
 
     val latch = CountDownLatch(1)
@@ -33,10 +39,10 @@ fun <T> runWithTimeoutOrNull(timeoutMillis: Long, function: () -> T): T? {
 
     // Wait for the function to finish or the timeout to be reached
     val completed = latch.await(timeoutMillis, TimeUnit.MILLISECONDS)
-
-    if (!completed || functionFailed.get()) {
+    if (!completed) return Timeout
+    if (functionFailed.get()) {
         tryOrNull { thread.interrupt() }
-        return null
+        return Fail(null)
     }
-    return result.get()
+    return OK(result.get())
 }
