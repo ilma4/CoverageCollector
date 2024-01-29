@@ -71,7 +71,7 @@ fun main(args: Array<String>) {
                 dir.toPath().forEachDirectoryEntry("*.java") {
                     tryOrNull { compiler.compileFile(it) } ?: log.error("Failed to compile $it")
                 }
-            }.asSequence().last()
+            }.asSequence().lastOrNull()
 
             task.classNames.forEach {
                 statsLogger.info("Benchmark ${name}_$run")
