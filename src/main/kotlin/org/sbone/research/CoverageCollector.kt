@@ -212,13 +212,7 @@ class CoverageReporter(
 
         if (logProgress) log.debug("Running tests...")
         val classLoader = PathClassLoader(
-            listOf(
-                context.logsPath,
-                context.jacocoInstrumentedDir,
-                context.compileDir,
-                context.junitPath,
-                context.evosuitePath,
-            )
+            with(context){jarPaths + compileDir +  compileDir}
         )
         var tests = 0
         var failures = 0
