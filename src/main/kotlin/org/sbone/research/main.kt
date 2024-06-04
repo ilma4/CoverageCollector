@@ -1,6 +1,5 @@
 package org.sbone.research
 
-import org.apache.commons.cli.*
 import org.vorpal.research.kfg.ClassManager
 import org.vorpal.research.kfg.KfgConfig
 import org.vorpal.research.kfg.container.asContainer
@@ -15,26 +14,15 @@ import kotlin.io.path.div
 import kotlin.io.path.forEachDirectoryEntry
 import kotlin.system.exitProcess
 
-fun getOptions(): Options = Options()
-    .addOption("c", "configPath", true, "Path to config file")
-    .addOption("b", "baseDir", true, "Path to the base dir")
-    .addOption(Option.builder("j").longOpt("jars").hasArgs().desc("Paths to jars").build())
-    .addOption("r", "runsNumber", true, "Runs number")
-    .addOption("t", "timeout", true, "Timeout for tests")
-
-
-private operator fun CommandLine.get(opt: String) = getOptionValue(opt)
-private fun CommandLine.getList(opt: String) = getOptionValues(opt).toList()
-
-
 fun main(args: Array<String>) {
-    val params = DefaultParser().parse(getOptions(), args)
-    val config = params["configPath"] as String
-    val baseDir = params["baseDir"] as String
-    val jarPaths = params.getList("jars").map { Path(it) }
-    val runsNumber = params["runsNumber"].toInt()
-    val timeoutMillis =
-        params["timeout"].toIntOrNull()?.toLong()?.times(1000L) ?: Context.NO_TIMEOUT
+    val config = args[0]
+    val baseDir = args[1]
+    val evosuitePath = args[2]
+    val junitPath = args[3]
+    val runsNumber = args[4].toInt()
+    val logsPath = args[5]
+    // arg[6] is timeout in seconds (eg: 120 is 2 minutes)
+    val timeoutMillis = tryOrNull { args[6] }?.toLong()?.times(1000L) ?: Context.NO_TIMEOUT
     log.debug { "Execution timeout is $timeoutMillis" }
 
     val bench = BenchmarkCollection(File(config))
@@ -44,12 +32,13 @@ fun main(args: Array<String>) {
             log.debug("Start ${name}_$run")
             val context = Context(
                 basePath = Path(baseDir) / "${name}_${run}",
-                jarPaths = jarPaths,
+                evosuitePath = Path(evosuitePath),
+                junitPath = Path(junitPath),
+                logsPath = Path(logsPath),
                 executionTimeoutMillis = timeoutMillis
             )
 
-            val containerPaths =
-                (listOf(task.binDirectory) + task.classPath).map { it.toPath().toAbsolutePath() }
+            val containerPaths = (listOf(task.binDirectory) + task.classPath).map { it.toPath().toAbsolutePath() }
             val containers = listOfNotNull(
                 *containerPaths.mapToArray {
                     it.asContainer()
@@ -71,10 +60,11 @@ fun main(args: Array<String>) {
 
             log.debug("Compile ${name}_$run")
             val compiler = CompilerHelper(
-                classPaths = containerPaths,
-                jarPaths = jarPaths,
-                testDirectory = context.testsDir,
-                compileDir = context.compileDir
+                containerPaths,
+                context.testsDir,
+                Path(evosuitePath),
+                Path(junitPath),
+                context.compileDir
             )
 
             context.testsDir.toFile().walk().onLeave { dir ->

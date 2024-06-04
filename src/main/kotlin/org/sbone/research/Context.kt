@@ -5,7 +5,9 @@ import kotlin.io.path.div
 
 data class Context(
     val basePath: Path,
-    val jarPaths: List<Path>,
+    val evosuitePath: Path,
+    val junitPath: Path,
+    val logsPath: Path,
     val executionTimeoutMillis: Long = NO_TIMEOUT // timeout for one testcase
 ) {
     companion object {
