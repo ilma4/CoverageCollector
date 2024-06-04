@@ -8,10 +8,17 @@ class CompilerHelper(
     private val evosuitePath: Path,
     private val junitPath: Path,
     private val compileDir: Path,
+    private val extraPaths: List<Path> = emptyList(),
 ) {
     fun compileFile(file: Path) {
         val compilerDriver = JavaCompilerDriver(
-            listOf(*classPaths.toTypedArray(), evosuitePath, junitPath, testDirectory), compileDir
+            listOf(
+                *classPaths.toTypedArray(),
+                evosuitePath,
+                junitPath,
+                testDirectory,
+                *extraPaths.toTypedArray()
+            ), compileDir
         )
         compilerDriver.compile(listOf(file))
     }
